@@ -107,6 +107,11 @@ function createBox(){
         position:new CANNON.Vec3(0,5,0),//位置
     })
     worldBox.addEventListener('collide',onHit)
+    //给物体添加力
+    worldBox.applyLocalForce(
+        new CANNON.Vec3(180,0,0),//向x轴添加180的力
+        new CANNON.Vec3(0,0,0)//作用在0，0，0位置
+    )
     world.addBody(worldBox)
     boxArr.push({
         sceneBox:cube,
