@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+</body>
+<script>
+    // 初始化webGL
+    function initWebGl() {
+        const canvas = document.getElementById('canvas')
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        // 获取webgl上下文
+        const gl = canvas.getContext('webgl')
+        if (!gl) {
+            console.log('您的浏览器暂不支持使用webgl')
+            return;
+        }
+        gl.viewport(0,0,canvas.width,canvas.height)
+
+        return gl
+
+    }
+    // 初始化WebGLShader着色器对象
+    function initShader(gl,type,source) {
+        // 创建着色器
+        const shader = gl.createShader(type)
+        // 编写glsl 创建着色器源码
+        gl.shaderSource(shader,source)
+        // 编译着色器
+        gl.compileShader(shader)
+        // 判断编译是否成功
+        if (!gl.getShaderParameter(shader,gl.COMPILE_STATUS)) {
+            console.log('编译失败')
+            return null
+        }
+        return shader;
+    }
+    // 初始化WebGLProgram对象
+    function initShaderProgram(gl,vsShader,fsShader) {
+        // 创建连接程序
+        const program = gl.createProgram()
+        // 连接顶点着色器
+        gl.attachShader(program,vsShader)
+        // 连接片元着色器
+        gl.attachShader(program,fsShader)
+        // 着色器即将被绘制
+        gl.linkProgram(program)
+        // 判断着色器渲染是否失败
+        if (!gl.getProgramParameter(program,gl.LINK_STATUS)) {
+            console.log('着色器渲染失败')
+            return null
+        }
+        gl.useProgram(program)
+        return program
+    }
+    // 初始化保存顶点数据的WebGLBuffer对象
+    function initBuffer(gl,shaderProgram,) {
+        // 创建三个顶点数据
+        const vertices = new Float32Array([
+            0,0.5,
+            -0.5,-0.5,
+            0.5,-0.5
+        ])
+        // 创建buffer容器
+        const buffer = gl.createBuffer()
+        // 绑定缓冲区对象
+        gl.bindBuffer(gl.ARRAY_BUFFER,buffer)
+        // 使用顶点数据 gl.STATIC_DRAW表示数据不会变 gl.DYNAMIC_DRAW表示数据会变
+        gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW)
+        // 绑定属性位置
+        let positionBound;
+        gl.bindAttribLocation(shaderProgram,positionBound,'vertexPosition')
+
+        return {buffer,positionBound}
+
+    }
+    // 绘制图元
+    function drawScene(gl,position,buffer) {
+        // 清空当前canvas数据
+        gl.clearColor(0,0,0,1.0)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+        // 启用顶点着色器中的a_Position
+        gl.enableVertexAttribArray(position)
+        // 告诉openGL如何解析顶点数据
+        gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0)
+        // 进行绘制
+        gl.drawArrays(gl.TRIANGLES,0,3)
+
+        // void glVertexAttribPointer(	GLuint index,
+ 	    //     GLint size,
+ 	    //     GLenum type,
+ 	    //     GLboolean normalized,
+ 	    //     GLsizei stride,
+ 	    //     const void * pointer);
+        // index:指定属性的索引。顶点有很多属性，我们需要对这些属性进行编号索引。
+        //     比如我们将位置信息的索引设置为1，也就是让位置为第一个属性。
+        // size: 指定每个通用顶点属性的组件数。必须是 1、2、3、4。
+        // type: 指定数组中每个组件的数据类型。
+        // normalized: 对于 glVertexAttribPointer，指定在访问定点数据值时是否应归一化(GL_TRUE)
+        //     或直接转换为定点值 (GL_FALSE)。
+        // stride: 指定连续通用顶点属性之间的字节偏移量。如果 stride 为 0，则通用顶点属性被理解为紧密封装在数组中。初始值为0。
+        // pointer:表示我们的位置数据在缓冲区起始位置的偏移量。这个值受到VBO的影响；1：在不使用VBO的情况下，就是一个指针，
+        //     指向的是需要上传到顶点数据指针，项目中通常在不使用VBO的情况下，绘制之前，执行glBindBuffer(GL_ARRAY_BUFFER,0)，
+        //     否则会导致数组顶点无效，界面无法显示；2：使用VBO的情况下，先要执行glBindBuffer(GL_ARRAY_BUFFER,1)，
+        //     如果一个名称非零的缓冲对象被绑定至GL_ARRAY_BUFFER目标且此时一个定点属性数组被指定了，那么pointer被当做该缓冲对象数
+        //     据存储区的字节偏移量。并且，缓冲对象绑定（GL_ARRAY_BUFFER_BINDING）会被存为索引为index的顶点属性数组客户端状态；
+        //     此时指针指向的就不是具体的数据了。因为数据已经缓存在缓冲区了。这里的指针表示位置数据在缓冲中起始位置的偏移量(Offset)。
+
+    }
+
+    // 调用上述方法
+    function entry() {
+        const gl = initWebGl()
+
+        //uniform 全局变量
+        //varying 专属片元着色器的变量 如在这边定义可在片元着色器中接收
+        const vsSource = `
+            attribute vec4 vertexPosition;
+            uniform mat4 u_Mat;
+            varying vec4 v_Color;
+            void main(void){
+                gl_Position = u_Mat * vertexPosition;
+                v_Color = vertexPosition;
+            }
+        `
+        // 创建片元着色器源代码
+        //接收顶点着色定义的颜色，进行颜色渲染
+        //顶点着色器与片元着色器的精度不同，因此需要设置精度
+        const fsSource  = `
+            precision mediump float;
+            void main(void){
+                gl_FragColor = vec4(1.0,0.0,0.0,1);
+            }
+        `
+        // 顶点着色器
+        const vertexShader = initShader(gl,gl.VERTEX_SHADER,vsSource)
+        // 创建片元着色器
+        const fragmentShader = initShader(gl,gl.FRAGMENT_SHADER,fsSource)
+
+        const shaderProgram = initShaderProgram(gl,vertexShader,fragmentShader)
+
+        const {buffer,positionBound} = initBuffer(gl,shaderProgram)
+
+        //把顶点数据乘一个矩阵 达到缩放
+        const scale = {
+            //图形缩小0.5倍
+            x:0.5,y:0.5,z:0.5
+        }
+        const mat = new Float32Array([
+            scale.x,0.0,0.0,0.0,
+            0.0,scale.y,0.0,0.0,
+            0.0,0.0,scale.z,0.0,
+            0.0,0.0,0.0,1.0
+        ])
+        gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram,'u_Mat'),false,mat)
+        // 创建顶点着色器源代码
+
+        drawScene(gl,positionBound,buffer)
+    }
+    entry()
+
+    // const canvas = document.getElementById('canvas')
+    // // 设置canvas的宽高
+    // canvas.width = window.innerWidth
+    // canvas.height = window.innerHeight
+    // // 获取webgl上下文
+    // const gl = canvas.getContext('webgl')
+    // // 第一次创建webgl绘图上下文需要设置视口大小
+    // gl.viewport(0,0,canvas.width,canvas.height)
+
+    // // 创建顶点着色器
+    // const vertexShader = gl.createShader(gl.VERTEX_SHADER)
+    // // 编写glsl 创建顶点着色器源码 定义位置
+    // gl.shaderSource(vertexShader,`
+    //     attribute vec4 a_Position;
+    //     void main(){
+    //         gl_Position = a_Position;
+    //     }
+    // `)
+    // // 编译顶点着色器
+    // gl.compileShader(vertexShader)
+
+    // // 创建片元着色器
+    // const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+    // // 编写glsl 创建片元着色器源码 定义颜色
+    // gl.shaderSource(fragmentShader,`
+    //     void main(){
+    //         gl_FragColor = vec4(1.0,0.0,0.0,1)
+    //     }
+    // `)
+    // // 编译片元着色器
+    // gl.compileShader(fragmentShader)
+
+    // // 创建程序链接顶点着色器和片元着色器
+    // const program = gl.createProgram()
+    // // 连接顶点着色器和片元着色器
+    // gl.attachShader(program,vertexShader)
+    // gl.attachShader(program,fragmentShader)
+    // // 程序关联
+    // gl.linkProgram(program)
+    // // 进行程序渲染
+    // gl.useProgram(program)
+
+    // // 创建顶点缓冲区对象
+    // const vertexBuffer = gl.createBuffer()
+    // // 绑定顶点缓冲区对象
+    // gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
+    // // 向顶点缓冲区对象中写入数据 创建三角形的三个顶点
+    // const vertices = new Float32Array([
+    //     0.0,0.5,
+    //     -0.5,-0.5,
+    //     0.5,-0.5
+    // ])
+    // // gl.STATIC_DRAW表示数据不会变 gl.DYNAMIC_DRAW表示数据会变
+    // gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW)
+    // // 获取顶点着色器中的a_Position变量的位置
+    // const a_Position = gl.getAttribLocation(program,'a_Position')
+    // // 告诉openGL如何解析顶点数据
+    // gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,0,0)
+    // // 启用顶点着色器中的a_Position
+    // gl.enableVertexAttribArray(a_Position)
+
+    // gl.drawArrays(gl.TRIANGLES,0,3)
+</script>
+</html>
