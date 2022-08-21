@@ -3,9 +3,9 @@ import * as THREE from 'three'
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 
 // @ts-ignore
-import basicFragmentShader from "./shader/basic/fragment.glsl"
+import basicFragmentShader from "./shader/fragment.glsl"
 // @ts-ignore
-import basicVertexShader from "./shader/basic/vertex.glsl"
+import basicVertexShader from "./shader/vertex.glsl"
 
 const scene = new THREE.Scene()
 
@@ -16,14 +16,18 @@ scene.add(camera)
 const axesHelper = new THREE.AxesHelper(5)
 scene.add(axesHelper)
 
-const shaderMaterial = new THREE.ShaderMaterial({
+//创建原始着色器材质
+const rawShaderMaterial = new THREE.RawShaderMaterial({
     vertexShader: basicVertexShader,
-    fragmentShader: basicFragmentShader
+    fragmentShader: basicFragmentShader,
+    // wireframe:true,//使用类型为线框
+    side:THREE.DoubleSide,//设置双面
 })
 
 const panel = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(1, 1),
-    shaderMaterial
+    //设置顶点数 如成为64*64的网格
+    new THREE.PlaneBufferGeometry(2, 2,64,64),
+    rawShaderMaterial
 )
 scene.add(panel)
 
