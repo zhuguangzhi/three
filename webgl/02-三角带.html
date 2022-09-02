@@ -12,6 +12,7 @@
     attribute vec4 a_Position;
     void main(){
         gl_Position = a_Position;
+        gl_PointSize = 40.0;
     }
 </script>
 <!--片元着色器-->
@@ -21,7 +22,7 @@
     }
 </script>
 <script type="module">
-    import initShader from "./static/initShader.js";
+    import initShader from "./js/initShader.js";
     const canvas = document.getElementById("canvas");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -32,8 +33,7 @@
     const gl = canvas.getContext('webgl')
 
     //  初始化着色器
-    const program = initShader(gl, vsSource, fsSource)
-    console.log('program',program)
+    initShader(gl, vsSource, fsSource)
     //  创建顶点数据
     const vertices = new Float32Array([
         0, 0.3,
@@ -49,7 +49,7 @@
     //  写入数据
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
     //  获取顶点着色器attribute变量
-    const a_Position = gl.getAttribLocation(program, 'a_Position')
+    const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
     //  修改attribute变量
     gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
     //  批处理

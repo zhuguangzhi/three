@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>使用poly</title>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+</body>
+<!--顶点着色器-->
+<script id="vertexShader" type="x-shader/x-vertex">
+  attribute vec4 a_Position;
+  void main(){
+    gl_Position = a_Position;
+    gl_PointSize = 40.0;
+  }
+</script>
+<!--片元着色器-->
+<script id="fragmentShader" type="x-shader/x-fragment">
+  void main(){
+    gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+  }
+</script>
+<script type="module">
+  import initShader from "./js/initShader.js";
+  import Poly from './js/poly.js'
+
+  const canvas = document.getElementById("canvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  //  获取着色器文本
+  const vsSource = document.querySelector('#vertexShader').innerText;
+  const fsSource = document.querySelector('#fragmentShader').innerText;
+  //  webgl对象
+  const gl = canvas.getContext('webgl')
+
+  //  初始化着色器
+  initShader(gl, vsSource, fsSource)
+  const poly = new Poly({
+    gl,
+    vertices:[0,0.2]
+  })
+  //  声明颜色
+  gl.clearColor(0, 0, 0, 1)
+  //  刷底色
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  poly.draw(['POINTS'])
+
+  setInterval(()=>{
+    poly.addVertices(Math.random()*2-1,Math.random()*2-1)
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    poly.draw(['POINTS'])
+  },500)
+
+  setInterval(()=>{
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    poly.draw(['POINTS','LINE_STRIP'])
+  },500)
+
+</script>
+</html>
