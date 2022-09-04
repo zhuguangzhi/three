@@ -1,0 +1,95 @@
+<!--场景：鼠标点击画布，绘制多边形路径。鼠标右击，取消绘制。鼠标再次点击，绘制新的多边形。-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>绘制多线</title>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+</body>
+<!--顶点着色器-->
+<script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    void main(){
+        gl_Position = a_Position;
+        gl_PointSize = 20.0;
+    }
+</script>
+<!--片元着色器-->
+<script id="fragmentShader" type="x-shader/x-fragment">
+    void main(){
+        gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    }
+</script>
+<script type="module">
+    import initShader from "./js/initShader.js";
+    import Poly from './js/poly.js'
+    import Sky from "./js/sky.js";
+    import {getMousePosInWebgl} from "./js/utils.js";
+
+    const canvas = document.getElementById("canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    //  获取着色器文本
+    const vsSource = document.querySelector('#vertexShader').innerText;
+    const fsSource = document.querySelector('#fragmentShader').innerText;
+    //  webgl对象
+    const gl = canvas.getContext('webgl')
+
+
+    //  初始化着色器
+    initShader(gl, vsSource, fsSource)
+
+    //  声明颜色
+    gl.clearColor(0, 0, 0, 1)
+    //  刷底色
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    //夜空
+    const sky = new Sky(gl)
+    //当前正在绘制的多边形
+    let poly = null
+//    关闭浏览器右键目录功能
+    canvas.oncontextmenu = ()=>false
+//    鼠标点击事件
+    canvas.addEventListener('mousedown',(event)=>{
+        if (event.button===2){
+            if (!poly) return;
+            popVertices()
+            render()
+            return;
+        }
+        const {x,y} = getMousePosInWebgl(event,canvas)
+        if (poly) poly.addVertices(x,y)
+        else crtPoly(x,y)
+        render()
+    })
+//    鼠标移动
+    canvas.addEventListener('mousemove',(event)=>{
+        if (!poly) return false;
+        const {x,y} = getMousePosInWebgl(event,canvas)
+        poly.setVertices(poly.count-1,x,y)
+        render()
+    })
+//    删除最后一个顶点 达到取消绘制线的效果
+    function popVertices(){
+        poly.popVertices()
+        poly = null
+    }
+//    创建多边形
+    function crtPoly(x,y) {
+        poly = new Poly({
+            vertices:[x,y,x,y],
+            types:['POINTS','LINE_STRIP']
+        })
+        sky.add(poly)
+    }
+//    渲染
+    function render(){
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        sky.draw()
+    }
+
+</script>
+</html>
