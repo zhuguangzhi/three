@@ -13,7 +13,6 @@ const initShader = (gl, vsSource, fsSource) => {
     gl.attachShader(program, vertexShader)
     gl.attachShader(program, fragmentShader)
     gl.program = program
-    console.log('program1', program)
 
 //    连接程序
     gl.linkProgram(program)

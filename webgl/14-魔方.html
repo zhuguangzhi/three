@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>分子贴图</title>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+</body>
+<script id="fragment" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform sampler2D u_Sampler;
+    varying vec2 v_Pin;
+    void main(){
+        gl_FragColor =  texture2D(u_Sampler,v_Pin);
+    }
+</script>
+<script id="vertex" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    attribute vec2 a_Pin;
+    uniform mat4 u_ModelMatrix;
+    varying vec2 v_Pin;
+    void main(){
+        v_Pin = a_Pin;
+        gl_Position = u_ModelMatrix*a_Position;
+    }
+</script>
+<script type="module">
+    import initShader from "./js/initShader.js";
+    import { Matrix4, Vector3, Quaternion } from 'https://unpkg.com/three/build/three.module.js';
+
+    const vsSource = document.getElementById('vertex').innerText
+    const fsSource = document.getElementById('fragment').innerText
+    const canvas = document.getElementById('canvas')
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    const gl = canvas.getContext('webgl')
+
+    initShader(gl,vsSource,fsSource)
+    gl.clearColor(0.0,0.0,0.0,1.0)
+    // gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+
+
+    //    创建数据源
+    const source = new Float32Array([
+        -0.5, -0.5, -0.5, 0, 0,
+        -0.5, 0.5, -0.5, 0, 0.5,
+        0.5, -0.5, -0.5, 0.25, 0,
+        -0.5, 0.5, -0.5, 0, 0.5,
+        0.5, 0.5, -0.5, 0.25, 0.5,
+        0.5, -0.5, -0.5, 0.25, 0,
+
+        -0.5, -0.5, 0.5, 0.25, 0,
+        0.5, -0.5, 0.5, 0.5, 0,
+        -0.5, 0.5, 0.5, 0.25, 0.5,
+        -0.5, 0.5, 0.5, 0.25, 0.5,
+        0.5, -0.5, 0.5, 0.5, 0,
+        0.5, 0.5, 0.5, 0.5, 0.5,
+
+        -0.5, 0.5, -0.5, 0.5, 0,
+        -0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, -0.5, 0.75, 0,
+        -0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.75, 0.5,
+        0.5, 0.5, -0.5, 0.75, 0,
+
+        -0.5, -0.5, -0.5, 0, 0.5,
+        0.5, -0.5, -0.5, 0.25, 0.5,
+        -0.5, -0.5, 0.5, 0, 1,
+        -0.5, -0.5, 0.5, 0, 1,
+        0.5, -0.5, -0.5, 0.25, 0.5,
+        0.5, -0.5, 0.5, 0.25, 1,
+
+        -0.5, -0.5, -0.5, 0.25, 0.5,
+        -0.5, -0.5, 0.5, 0.25, 1,
+        -0.5, 0.5, -0.5, 0.5, 0.5,
+        -0.5, -0.5, 0.5, 0.25, 1,
+        -0.5, 0.5, 0.5, 0.5, 1,
+        -0.5, 0.5, -0.5, 0.5, 0.5,
+
+        0.5, -0.5, -0.5, 0.5, 0.5,
+        0.5, 0.5, -0.5, 0.75, 0.5,
+        0.5, -0.5, 0.5, 0.5, 1,
+        0.5, -0.5, 0.5, 0.5, 1,
+        0.5, 0.5, -0.5, 0.75, 0.5,
+        0.5, 0.5, 0.5, 0.75, 1,
+    ])
+    //元素字节数
+    const elementBytes = source.BYTES_PER_ELEMENT;
+    // 系列尺寸
+    const posSize = 3;
+    const pinSize = 2;
+    //    类目尺寸
+    const categorySize = posSize+pinSize
+    //    类目字节数
+    const categoryBytes = categorySize * elementBytes
+    //    系列字节索引位置
+    const posByteIndex = 0
+    const pinByteIndex = posSize * elementBytes;
+    //    顶点总数
+    const sourceSize = source.length / categorySize
+
+    const sourceBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER,sourceBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER,source,gl.STATIC_DRAW)
+
+    const a_Position = gl.getAttribLocation(gl.program,'a_Position')
+    gl.vertexAttribPointer(
+        a_Position,
+        posSize,
+        gl.FLOAT,
+        false,
+        categoryBytes,
+        posByteIndex
+    )
+    gl.enableVertexAttribArray(a_Position);
+    const a_Pin = gl.getAttribLocation(gl.program,'a_Pin')
+    gl.vertexAttribPointer(
+        a_Pin,
+        pinSize,
+        gl.FLOAT,
+        false,
+        categoryBytes,
+        pinByteIndex
+    )
+    gl.enableVertexAttribArray(a_Pin)
+
+    //模型矩阵
+    const modelMatrix = new Matrix4()
+    const mx = new Matrix4().makeRotationX(0.02)
+    const my = new Matrix4().makeRotationY(0.02)
+    modelMatrix.multiply(mx)
+    const u_ModelMatrix = gl.getUniformLocation(gl.program,'u_ModelMatrix')
+    gl.uniformMatrix4fv(u_ModelMatrix,false,modelMatrix.elements)
+
+    //    建立Image 图像作为图像源，当图像源加载成功后再贴图。
+    //对纹理图像垂直翻转
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,1)
+    //    获取纹理单元
+    gl.activeTexture(gl.TEXTURE0);
+    //    创建纹理对象
+    const texture = gl.createTexture()
+    //    将纹理对象装进纹理单元中
+    gl.bindTexture(gl.TEXTURE_2D,texture)
+
+    const image = new Image()
+    image.src = './static/mf.jpg'
+    // image.src = './static/ssz.png'
+    image.onload = function (){
+        showMap()
+    }
+    function showMap (){
+        //    配置纹理图像
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            image
+        )
+
+        // 定义从分子图像中取色的方法 详情参数见笔记
+        gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_WRAP_S,
+            gl.CLAMP_TO_EDGE
+        );
+        gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_WRAP_T,
+            gl.CLAMP_TO_EDGE
+        );
+        gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MIN_FILTER,
+            gl.LINEAR
+        );
+
+
+
+        //    获取u_Sampler
+        const u_Sampler = gl.getUniformLocation(gl.program,'u_Sampler')
+        //    将0号纹理分配给着色器，0 是纹理单元编号
+        gl.uniform1i(u_Sampler,0)
+
+        render()
+    }
+    const render = ()=>{
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, sourceSize);
+    }
+    // 连续渲染
+    !(function ani() {
+        modelMatrix.multiply(my).multiply(mx)
+        gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
+        render()
+        requestAnimationFrame(ani)
+    })()
+</script>
+</html>
