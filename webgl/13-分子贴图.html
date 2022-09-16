@@ -86,7 +86,7 @@
 //    建立Image 图像作为图像源，当图像源加载成功后再贴图。
     //对纹理图像垂直翻转
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,1)
-//    获取纹理单元
+//    激活指定的纹理单元
     gl.activeTexture(gl.TEXTURE0);
 //    创建纹理对象
     const texture = gl.createTexture()
