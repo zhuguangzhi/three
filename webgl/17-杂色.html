@@ -28,6 +28,7 @@
         float n = dot(fragCoord,a);
 //        fract 取小数部分
         return fract(sin(n)*1000.0);
+//        return fract(sin(n)*10.000);
     }
     void main(){
         float f = rand(gl_FragCoord.xy);
