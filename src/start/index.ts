@@ -27,17 +27,19 @@ const controls = new OrbitControls(camera,renderer.domElement)
 //    控制器添加阻尼 在循环时需要调用update
 controls.enableDamping = true
 
-const shaderMaterial = new THREE.ShaderMaterial({
-    vertexShader:vsShader,
-    fragmentShader:fsShader
-})
-
 const geometry = new THREE.BufferGeometry()
 geometry.setAttribute('position',new THREE.BufferAttribute(
     new Float32Array([
         0,0,0
     ]),3
 ))
+const shaderMaterial = new THREE.ShaderMaterial({
+    vertexShader:vsShader,
+    fragmentShader:fsShader,
+    transparent:true
+})
+
+
 
 const points = new THREE.Points(
     geometry,shaderMaterial
