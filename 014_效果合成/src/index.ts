@@ -14,6 +14,12 @@ import {DotScreenPass} from "three/examples/jsm/postprocessing/DotScreenPass"; /
 import {SMAAPass} from "three/examples/jsm/postprocessing/SMAAPass";
 import {SSAARenderPass} from "three/examples/jsm/postprocessing/SSAARenderPass";
 import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass";
+
+// @ts-ignore
+import fragmentShader from "./shader/fragment.glsl"
+// @ts-ignore
+import vertexShader from "./shader/vertex.glsl"
 
 // 创建Gui对象
 const gui = new dat.GUI();
@@ -97,8 +103,33 @@ effectComposer.addPass(smaaPass)
 unrealBloomPass.enabled = false
 effectComposer.addPass(unrealBloomPass)
 
-
-
+const colorParams = {
+    r:0,
+    g:0,
+    b:0
+}
+//使用着色器编写自定义 渲染通道
+const shaderPass = new ShaderPass({
+    uniforms:{
+        tDiffuse:{
+            value:null
+        },
+        uColor:{
+            value: [colorParams.r,colorParams.g,colorParams.b]
+        }
+    },
+    vertexShader,fragmentShader
+})
+gui.add(colorParams,"r").min(-1).max(1).step(0.01).onChange(value => {
+    shaderPass.uniforms.uColor.value.r = value
+})
+gui.add(colorParams,"g").min(-1).max(1).step(0.01).onChange(value => {
+    shaderPass.uniforms.uColor.value.g = value
+})
+gui.add(colorParams,"b").min(-1).max(1).step(0.01).onChange(value => {
+    shaderPass.uniforms.uColor.value.b = value
+})
+effectComposer.addPass(shaderPass)
 
 
 

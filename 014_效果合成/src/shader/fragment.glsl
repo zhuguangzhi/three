@@ -1,3 +1,8 @@
+uniform sampler2D tDiffuse;
+uniform vec3 uColor;
+varying vec2 v_Uv;
 void main (){
-    gl_FragColor = vec4(1.0,1.0,0.0,1.0);
+    vec4 color = texture2D(tDiffuse,v_Uv);
+    color.rgb+=uColor;
+    gl_FragColor = color;
 }
