@@ -15,7 +15,7 @@ camera.position.set(0, 0, 10)
 scene.add(camera)
 
 // const axesHelper = new THREE.AxesHelper(5)
-// scene.add(axesHelper)
+// sceneInit.add(axesHelper)
 
 //创建环境纹理
 const rgbeLoader = new RGBELoader();

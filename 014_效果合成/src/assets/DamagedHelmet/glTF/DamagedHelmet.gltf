@@ -170,7 +170,7 @@
     "samplers" : [
         {}
     ],
-    "scene" : 0,
+    "sceneInit" : 0,
     "scenes" : [
         {
             "name" : "Scene",

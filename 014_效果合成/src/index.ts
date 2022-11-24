@@ -140,7 +140,7 @@ function render() {
 //    动画帧，每帧执行一次
     requestAnimationFrame(render)
     //使用渲染器，通过相机将场景渲染进来
-    // renderer.render(scene, camera)
+    // renderer.render(sceneInit, camera)
     effectComposer.render()
 }
 

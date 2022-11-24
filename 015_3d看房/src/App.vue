@@ -39,7 +39,7 @@ const render = ()=>{
 // console.log('boxMaterials',boxMaterials)
 // const cube = new THREE.Mesh(geometry,boxMaterials)
 // cube.geometry.scale(1,1,-1)
-// scene.add(cube)
+// sceneInit.add(cube)
 
 //使用球体完成3D渲染
 const geometry = new THREE.SphereGeometry(5,32,32)
